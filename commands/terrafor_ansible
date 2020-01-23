@@ -1,0 +1,19 @@
+terraform init
+terraform get
+terraform plan
+terraform apply
+terraform destroy
+terraform validate
+terraform providers
+
+
+
+
+
+ansible all -m ping
+ansible-playbook myplaybook.yml -u sammy
+ansible all -a "uname -a"
+ansible-playbook myplaybook.yml --tags=mysql,nginx
+
+ansible-playbook myplaybook.yml --skip-tags=mysql
+

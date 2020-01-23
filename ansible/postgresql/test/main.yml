@@ -1,0 +1,18 @@
+- hosts: dbservers
+  remote_user: ubuntu
+  become: yes
+
+  tasks:
+    - name: install repo for PostgreSQL 9.6
+      yum:
+        name: https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+        state: present
+
+    - name: install PostgreSQL version 9.6
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - postgresql96-server
+        - postgresql96-contrib
+        - pg_repack96

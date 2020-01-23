@@ -1,0 +1,5 @@
+netstat -at
+netstst -a
+ifconfig
+ip a
+nmap

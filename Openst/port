@@ -1,0 +1,104 @@
+root@opsk99:~# neutron net-show pings-net2
++-------------------------+-----------------------------------------------+
+| Field                   | Value                                         |
++-------------------------+-----------------------------------------------+
+| admin_state_up          | True                                          |
+| contrail:fq_name        | default-domain                                |
+|                         | admin                                         |
+|                         | pings-net2                                    |
+| contrail:instance_count | 0                                             |
+| contrail:subnet_ipam    | {"subnet_cidr": "5.5.5.0/24",
+                             "ipam_fq_name": ["default-domain",
+                             "default-project", "default-network-ipam"]}  |
+| id                      | 85c5f558-9a9e-4eec-a9ef-ef10ca7aa7b4          | #<<
+| name                    | pings-net2                                    |
+| port_security_enabled   | True                                          |
+| router:external         | False                                         |
+| shared                  | False                                         |
+| status                  | ACTIVE                                        |
+| subnets                 | 02cdd9c7-01a3-46f1-976b-778d3030768c          | #<<
+| tenant_id               | ede15b5d21eb4401bd2a56e8d373aa71              |
++-------------------------+-----------------------------------------------+
+ 
+Create a port/VMI based on the VN.
+Based on the VN ID and subnets ID, use the following command to create a port/VMI:
+
+                                        (VN ID)
+root@opsk99:~# neutron port-create 85c5f558-9a9e-4eec-a9ef-ef10ca7aa7b4 \
+    --fixed-ip subnet_id=02cdd9c7-01a3-46f1-976b-778d3030768c \
+    --name temp-port-ping
+
+Created a new port:
++-----------------------+--------------------------------------------------------+
+| Field                 | Value                                                  |
++-----------------------+--------------------------------------------------------+
+| admin_state_up        | True                                                   |
+| allowed_address_pairs |                                                        |
+| binding:host_id       |                                                        |
+| binding:vif_details   | {"port_filter": true}                                  |
+| binding:vif_type      | vrouter                                                |
+| binding:vnic_type     | normal                                                 |
+| device_id             |                                                        |
+| device_owner          |                                                        |
+| fixed_ips             | {"subnet_id": "02cdd9c7-01a3-46f1-976b-778d3030768c",
+                           "ip_address": "5.5.5.4"}                              |
+| id                    | 06bbde4f-da73-4a60-9b23-0618a0f01a6d                   | #<-port ID
+| mac_address           | 02:06:bb:de:4f:da                                      |
+| name                  | temp-port-ping                                         |
+| network_id            | 85c5f558-9a9e-4eec-a9ef-ef10ca7aa7b4                   |
+| port_security_enabled | True                                                   |
+| security_groups       | 69446014-a3d8-4bd7-a8e6-ec4a3055253e                   |
+| status                | DOWN                                                   |
+| tenant_id             | ede15b5d21eb4401bd2a56e8d373aa71                       |
++-----------------------+--------------------------------------------------------+
+ 
+Attach the port to an existing VM.
+Based on the ID of the created port and the ID of the VM, use the following nova interface-attach command to attach the port to the VM:
+
+root@opsk99:~# nova interface-attach --port-id \
+    06bbde4f-da73-4a60-9b23-0618a0f01a6d 4663093b-1a3e-4a34-868b-f4d66f59a573
+    (port ID)                               (VM ID)
+
+root@opsk99:~# nova show 4663093b-1a3e-4a34-868b-f4d66f59a573
++--------------------------------------+-----------------------------------------+
+| Property                             |Value                                    |
++--------------------------------------+-----------------------------------------+
+| OS-DCF:diskConfig                    | AUTO                                    |
+| OS-EXT-AZ:availability_zone          | vComp106                                |
+| OS-EXT-SRV-ATTR:host                 | comp106                                 |
+| OS-EXT-SRV-ATTR:hypervisor_hostname  | comp106.localdomain                     |
+| OS-EXT-SRV-ATTR:instance_name        | instance-000000e9                       |
+| OS-EXT-STS:power_state               | 1                                       |
+| OS-EXT-STS:task_state                | -                                       |
+| OS-EXT-STS:vm_state                  | active                                  |
+| OS-SRV-USG:launched_at               | 2018-11-18T04:25:18.000000              |
+| OS-SRV-USG:terminated_at             | -                                       |
+| accessIPv4                           |                                         |
+| accessIPv6                           |                                         |
+| config_drive                         |                                         |
+| created                              | 2018-11-18T04:25:08Z                    |
+| flavor                               | m1.small(2)                             |
+| hostId                               | cc04d89a6688f860bf4f735155c290a00d4f17185ffe7474fc9470ab                         |
+| id                                   | 4663093b-1a3e-4a34-868b-f4d66f59a573    |
+| image                                | ubuntucloudimg (4ef16b82-1cda-449d-ac3c-8eba5590327c)                                           |
+| key_name                             | -                                       |
+| metadata                             | {}                                      |
+| name                                 | pings-net-comp106-ubuntucloud           |
+| os-extended-volumes:volumes_attached | []                                      |
+| pings-net network                    | 4.4.4.14                                | #<<
+| pings-net2 network                   | 5.5.5.4                                 | #<<
+| progress                             | 0                                       |
+| security_groups                      | default                                 |
+| status                               | ACTIVE                                  |
+| tenant_id                            | ede15b5d21eb4401bd2a56e8d373aa71        |
+| updated                              | 2018-11-20T15:20:29Z                    |
+| user_id                              | 5afceb032d3c4dfda9391abe1a362ddb        |
++--------------------------------------+-----------------------------------------+
+ 
+The above output shows that the port is successfully attached to the VM. Note that the VM has a new IP address added, which is the IP of the port that was just attached.
+
+Detach the port from the VM.
+To detach the port from the VM, use the following nova interface-detach command. As opposed to the nova interface-attach command, remember to reverse the order of the two parameters (the port ID and VM ID) in the detach command.
+
+nova interface-detach 4663093b-1a3e-4a34-868b-f4d66f59a573 \
+06bbde4f-da73-4a60-9b23-0618a0f01a6d

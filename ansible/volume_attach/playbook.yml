@@ -1,0 +1,27 @@
+---
+ - hosts: all
+   user: ubuntu
+   become: yes
+   tasks:
+        - name: aws-vg volume group creation
+          lvg:
+               vg: aws-vg
+               pvs: /dev/xvdb
+
+        - name: aws-lv lvm creation
+          lvol:
+               vg: aws-vg
+               lv: aws-lv
+               size: 8G
+
+        - name: create file system for aws-lv
+          filesystem:
+                fstype: ext4
+                dev: /dev/aws-vg/aws-lv
+
+        - name: mount aws-lv logical volumes
+          mount:
+                name: /tmp/test
+                src: /dev/aws-vg/aws-lv
+                fstype: ext4
+                state: mounted
